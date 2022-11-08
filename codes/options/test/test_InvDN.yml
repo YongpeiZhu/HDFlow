@@ -1,0 +1,58 @@
+name: Test_InvDN
+suffix: ~  # add suffix to saved images
+model: HCFlow_Rescaling
+scale: 4
+crop_border: ~  # crop border when evaluation. If None(~), crop the scale pixels
+gpu_ids: [0]
+self_ensemble: False
+
+datasets:
+  test_1:  # the 1st test dataset
+    name: SIDD
+    mode: LQGTRN
+    dataroot_Noisy: '/apdcephfs/private_jacorbzhu/InvDN/codes/datasets' # path to test Noisy images
+    dataroot_LQ: ~
+  test_2:  # the 2nd test dataset
+    name: DND
+    mode: LQGTRN
+    dataroot_Noisy: '/apdcephfs/private_jacorbzhu/InvDN/codes/dnd_2017' # path to test Noisy images
+    dataroot_LQ: ~
+
+#### network
+network_G:
+  which_model_G: HCFlowNet_Rescaling
+  subnet_type: Resnet
+  in_nc: 3
+  out_nc: 3
+  block_num: [8, 8]
+  scale: 4
+  init: xavier
+
+  flowDownsampler:
+    K: 14
+    L: 2
+    squeeze: haar # better than squeeze2d
+    flow_permutation: none # bettter than invconv
+    flow_coupling: Affine3shift # better than affine
+    nn_module: DenseBlock # better than FCN
+    hidden_channels: 32
+    cond_channels: ~
+    splitOff:
+      enable: true
+      after_flowstep: [6, 6]
+      flow_permutation: invconv
+      flow_coupling: Affine
+      stage1: True
+      feature_extractor: RRDB
+      nn_module: FCN
+      nn_module_last: Conv2dZeros
+      hidden_channels: 64
+      RRDB_nb: [2,1]
+      RRDB_nf: 64
+      RRDB_gc: 16
+
+
+#### path
+path:
+  pretrain_model_G: '/apdcephfs/share_887471/staffs/jacorbzhu/InvDN/experiments_yy/InvDN_ResUnit_x4/models/latest_G.pth'
+  #'/data/yongpei/data/InvDN/experiments/InvDN_ResUnit_x4/models/3187_G.pth'
